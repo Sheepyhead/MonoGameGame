@@ -6,6 +6,8 @@
     <MonoGamePlatform>DesktopGL</MonoGamePlatform>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>CS8600;CS8602;CS8603;CS8625</WarningsAsErrors>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -32,8 +34,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MonoGame.Framework.DesktopGL.Core" Version="3.8.*" />
-    <PackageReference Include="MonoGame.Content.Builder" Version="3.7.*" />
+    <PackageReference Include="Aether.Physics2D" Version="1.4.0" />
+    <PackageReference Include="DefaultEcs" Version="0.13.1" />
+    <PackageReference Include="MonoGame.Framework.DesktopGL.Core" Version="3.8.0.2" />
+    <PackageReference Include="MonoGame.Content.Builder" Version="3.7.0.9" />
   </ItemGroup>
 
 </Project>
