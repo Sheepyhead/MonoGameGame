@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Rendering;
 using tainicom.Aether.Physics2D.Dynamics;
 using GameWorld = DefaultEcs.World;
 using PhysicalWorld = tainicom.Aether.Physics2D.Dynamics.World;
@@ -16,6 +17,8 @@ namespace MonoGameGame
         private PhysicalWorld _physicalWorld;
         private Entity _player;
         private Entity _object;
+        private ResolutionIndependentRenderer _resolutionIndependence;
+        private Camera2D _camera;
 
 #pragma warning disable CS8618 // Disabled since initialization is moved to Initialize
         public Game1()
@@ -36,6 +39,10 @@ namespace MonoGameGame
             _physicalWorld = new PhysicalWorld();
             _physicalWorld.Gravity = Vector2.Zero;
 
+            _resolutionIndependence = new ResolutionIndependentRenderer(this);
+            _camera = new Camera2D(_resolutionIndependence);
+            InitializeResolutionIndependence(_graphics.GraphicsDevice.Viewport.Width, _graphics.GraphicsDevice.Viewport.Height);
+
             base.Initialize();
         }
 
@@ -51,7 +58,7 @@ namespace MonoGameGame
                 var body = _physicalWorld.CreateBody(new Vector2(100, 100), 0, BodyType.Dynamic);
                 var size = _player.Get<SpriteRenderer>().Texture.Bounds;
                 body.CreateRectangle(size.Width, size.Height, 0, Vector2.Zero);
-                body.LinearDamping = 20f;
+                body.Mass = 1;
                 _player.Set(new Transform { Body = body });
             }
             {
@@ -68,36 +75,39 @@ namespace MonoGameGame
                 Exit();
 
             // TODO: Add your update logic here
-            var force = Vector2.Zero;
+            var velocity = Vector2.Zero;
+            var velocityScalar = 1000f;
             if (Keyboard.GetState().IsKeyDown(Keys.Right))
             {
-                force.X += 100000;
+                velocity.X += velocityScalar;
             }
             if (Keyboard.GetState().IsKeyDown(Keys.Left))
             {
-                force.X -= 100000;
+                velocity.X -= velocityScalar;
             }
             if (Keyboard.GetState().IsKeyDown(Keys.Down))
             {
-                force.Y += 100000;
+                velocity.Y += velocityScalar;
             }
             if (Keyboard.GetState().IsKeyDown(Keys.Up))
             {
-                force.Y -= 100000;
+                velocity.Y -= velocityScalar;
             }
-            _player.Get<Transform>().Body.ApplyForce(force);
+            _player.Get<Transform>().Body.LinearVelocity = velocity;
 
-            _physicalWorld.Step((float)gameTime.ElapsedGameTime.TotalSeconds);
+            _physicalWorld.Step(gameTime.ElapsedGameTime);
+
+            _camera.Position = _player.Get<Transform>().Position;
 
             base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(Color.Magenta);
 
             // TODO: Add your drawing code here
-            _spriteBatch.Begin();
+            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearWrap, DepthStencilState.None, RasterizerState.CullNone, null, _camera.GetViewTransformationMatrix());
             _spriteBatch.Draw(_player.Get<SpriteRenderer>().Texture, _player.Get<Transform>().Position, Color.White);
             _spriteBatch.Draw(_object.Get<SpriteRenderer>().Texture, _object.Get<Transform>().Position, Color.Red);
             _spriteBatch.End();
@@ -110,6 +120,15 @@ namespace MonoGameGame
             _player.Dispose();
 
             base.Dispose(disposing);
+        }
+
+        private void InitializeResolutionIndependence(int realScreenWidth, int realScreenHeight)
+        {
+            _resolutionIndependence.VirtualWidth = _resolutionIndependence.ScreenWidth = realScreenWidth;
+            _resolutionIndependence.VirtualHeight = _resolutionIndependence.ScreenHeight = realScreenHeight;
+            _resolutionIndependence.Initialize();
+
+            _camera.RecalculateTransformationMatrices();
         }
     }
 }
